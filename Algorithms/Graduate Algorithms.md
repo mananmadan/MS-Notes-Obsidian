@@ -1,0 +1,3 @@
+- Do ga-notes.pdf in MS Folder and Watch lectures with it
+- DP Problems could be done from LeetCode
+- Do competitive with it, otherwise it can get boring
