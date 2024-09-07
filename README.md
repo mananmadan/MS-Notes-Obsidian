@@ -1,1 +1,16 @@
-- Courses 
+- Schedule
+	- Monday Thurs Fri Sun (Spend Time on Operating Sytem) 
+	- Sat : Mixed Stuff
+
+- Mixed Stuff (Priority Wise)
+    - Computer Networking Video: 
+	    - [ ] https://www.youtube.com/watch?v=IPvYjXCsTg8&t=234s&pp=ygURY29tcHV0ZXIgbmV0d29ya3M%3D
+	- Beej's Guide To Socket Programming 
+		- Could probably pick it up gradually
+	- Graphs **Have to do this from DPV Practice Problems + Study**
+	- Study can be done from cp-algorithms and then some practice as well from cp-algorithms, then could do DPV Book
+		- Topics to cover
+			- ![[Pasted image 20240907221851.png]]
+	- DP  
+	   -   Topics to cover ![[Pasted image 20240907221957.png]]
+	   - And DPV Practice Problems
