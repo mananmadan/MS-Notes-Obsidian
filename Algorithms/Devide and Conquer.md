@@ -1,0 +1,2 @@
+- Topics to cover
+- ![[Pasted image 20240921145242.png]]

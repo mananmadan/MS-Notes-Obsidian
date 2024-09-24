@@ -1,10 +1,11 @@
 - Schedule
-	- Monday Thurs Fri Sun (Spend Time on Operating Sytem) 
+	- Monday Thurs Fri  (Spend Time on Operating Sytem) 
 	- Sat : Mixed Stuff
+	- Sun: Mixed Stuff
 
 - Mixed Stuff (Priority Wise)
     - Computer Networking Video: 
-	    - [ ] https://www.youtube.com/watch?v=IPvYjXCsTg8&t=234s&pp=ygURY29tcHV0ZXIgbmV0d29ya3M%3D
+	    - [x] https://www.youtube.com/watch?v=IPvYjXCsTg8&t=234s&pp=ygURY29tcHV0ZXIgbmV0d29ya3M%3D
 	- Beej's Guide To Socket Programming 
 		- Could probably pick it up gradually
 	- Graphs **Have to do this from DPV Practice Problems + Study**

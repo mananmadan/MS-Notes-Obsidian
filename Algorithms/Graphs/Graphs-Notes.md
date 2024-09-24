@@ -1,0 +1,95 @@
+### <u>Connected Components</u>
+
+#### <u>Undirected Graphs </u>:
+- Connected components is just a collection of nodes that are connected to each other by some edge.
+- In order to count the number of connected components in a undirected graph, **DFS** can be used
+- Following technique could be used to find out the connected components in a dfs graph
+	- ![[Pasted image 20240921200530.png]]
+- **Explore Function can be written in the following way as well**
+	- ![[Pasted image 20240921200716.png]]
+- The runtime of this algorithm is 0(n + m), because we are basically running a DFS only on the whole graph, where n = |V| and m = |E|
+- **To find the path using the DFS Algorithm, among the components that are connected together**
+- We can add a predecessor array as follows prev(v) to and then use it to find the path between vertices Vi .. Vj, by hopping onto each prev()/parent node of the current node until we reach the the destination
+- ![[Pasted image 20240921201027.png]]
+### Directed Graphs in DFS 
+- For directed graphs in DFS, we actually want to take out post order and pre order numbers, as several of connectivity propertied depend on it
+	- **Pre Order**: This is representing the "clock time" when we are just starting out exploring the vertex
+	- **Post Order:** This represents the "clock time" when we are just done with exploring the vertex
+	- We can calculate the pre order and post order numbers as given in the below code 
+    - ![[Pasted image 20240923202710.png]]
+- **Example Graph**: 
+	- ![[Pasted image 20240923202929.png]]
+- DFS of the above example graph with post and pre orders looks something like this:
+	- ![[Pasted image 20240923203048.png]]
+- #### Types on Edges of Graph in Terms of Post Order Number
+- **Tree Edges:**  B->A, A->D, here post(B) > post(A)
+- **Forward Edges**: These are edges that are in the direction of tree edges, but were not explored due to it's path already been visited
+	- D->G, here also post(D) > post(G)
+- **Cross Edges:** Eg here F->H, H->G, here also post(F) > post(H)
+- **BACK EDGES:** Eg here E->A,F->B, ***here post(E) < post(A)***
+	- This is the major distinguishing factor of back edges that the post order number of the directed edges is in the opposite as the rest of the edges
+
+#### Cycles
+- **THEOREM:** a Graph G has a cycles iff there the DFS Tree has a back edges
+- **PROOF:**
+	- Since this is a equivalence relationship we can prove both parts to prove it
+	- **Case 1: There is a cycle so there has to be back edge**
+		- Assuming a cycle A->B->C ......->J ...->A
+		- So in the DFS tree here we would start from some node b/w A .. J
+		- So that node will be a the top of DFS Tree, because all the other nodes are explorable from that node
+		- But atleast one of the node will that below (ie descendent) of this starting node, will have a node to the main node, because there's a cycle
+		- That will be a back edge
+		 - ![[Pasted image 20240923204844.png]]
+	- **Case 2: There's a back edge so there has to be a cycle**
+		- Assuming the DFS Tree of a certain node, if there's a back edge from a descendant to the ancestor (which is the definition of a back edge), there will be a node from current node to the descendant, thus a cycle is existing
+		- ![[Pasted image 20240923204906.png]]
+#### Topological Sorting
+- Topological sorting on a directed acyclical graph (DAG) can be obtained the vertices in decreasing order of post order numbers
+- **Sinks have the higher post order numbers, sources have the lowest post order numbers**
+- So if we order from source to sink, then basically each edge will from left to right and thus we will obtain topological sorting
+- ![[Pasted image 20240923205402.png]]
+- This can be done in linear time, as DFS will take 0(n+m) time, and we will line up the vertices in an array of post orders (which will be min 1 and max 2n), then just iterate from back to front of the array and list out the vertices
+- **We are doing the above step instead of sorting to save time**
+##### Alternative way to topological sort
+- ![[Pasted image 20240923205728.png]]
+- Here we can see X is a source, W is a sink 
+ - A **source** is the one with the higher number of outgoing edges, a **sink** is one which has highest number of incoming edges
+ - So an alternative way for topological sort would be 
+	 - Find a sink, delete all the edges
+	 - Find a new sink and repeate
+- For example here, we can find w, eliminate all the edges of W, then the new sink will be Z or U, we can do so on and so forth to get a topological ordering
+### Strongly Connected Components
+- This the alternative to connected components in the undirected graph
+- We say if there this is a path from **v -> w and w -> v**, then vertices v and w are strongly connected 
+	- SCC == maximal set of strongly connected vertices
+- **IF WE FIND OUT STRONGLY CONNECTED COMPONENTS, AND MAKE A METAGRAPH OUT OF IT, THEN IT WILL BE A DAG**
+	- Example
+	- ![[Pasted image 20240923210615.png]]
+	- **PROOF:** If there a vertex from one strongly connect component S to S' and S' to S (basically if there was a cycle), every vertice of S would be reachable from S' and every edge of S' would be reachable from S making them a strong connected component as well, which they are not, hence it's a DAG
+- #### Topological Sorting of a DAG
+ - **Algorithm Idea:**
+	 - Find a sink vertex
+		 - Why a sink vertex? 
+	     - **Because sink vertices are easier to deal with as once explore is called on them, they will only visit the vertices that are part of it's component, where as a source vertex, will have other outcoming edges, and it will basically visit all the nodes in the graph**
+	- Visit all the node of the sink vertex, since it's a sink we will only visit the components that lie in it's scc
+	- Find next sink component and visit 
+	- Do this untill there's no sink component left and you will have a topological ordering
+- **MAIN ISSUE:** Unlike undirected graph, the vertices with the lowest post order number will not be a sink in a directed graph
+- **SOLUTION:** A vertex with the higher post order number is still a **source vertex**
+- **ALGORITHM:**
+	- To Find a Sink Vertex
+	- Reverse the Graph and Generate a graph G^R, find ordering of source vertices in this graph
+		- ![[Pasted image 20240923214259.png]]
+	- These will be sink vertices in the orginal graph
+	- One by one keep calling explore on these sink vertices and eliminating all the visited vertices
+	- The components obtained in this manner will be topologically sorted
+	- ![[Pasted image 20240923214358.png]]
+- ### SCC Proof
+- ![[Pasted image 20240923214557.png]]
+- If we can claim that for 2 strongly connect components, if V belonging to S and W belonging to S' if there is a edge from V --> W then it mean that the max post order number is S > max post in S' then we can obtain our conclusion from that
+- We can do that by taking 2 cases, in which we say that we start **first exploring from S'**
+- **Case 1:** 
+	- ![[Pasted image 20240923214753.png]]
+- **Case 2:** We start exploring from S, then it's basic that if we start from there and since S' is able to visit from S in DFS Tree it will be above
+	- ![[Pasted image 20240923214955.png]]
+	-

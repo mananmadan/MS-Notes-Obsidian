@@ -1,3 +1,7 @@
-- Do ga-notes.pdf in MS Folder and Watch lectures with it
-- DP Problems could be done from LeetCode
-- Do competitive with it, otherwise it can get boring
+- Problem List from : http://omscs.wikidot.com/courses:cs6515
+- [ ] Graphs from Book & Lectures (Could reference CP-Algorithms with it)
+- [ ] DPV Problems Graphs 
+- [ ] D&C From Book & Lectures 
+- [ ] DP D&C Book
+- [ ] DP From Book & Lectures
+- [ ] DP DPV Problems
