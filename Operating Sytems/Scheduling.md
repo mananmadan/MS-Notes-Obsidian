@@ -89,3 +89,33 @@
 
 ### <u>How long should a timeslice be:</u>
 - The shorter the time slice, the more responsiveness we will get out of the system, but we will also face more overhead as well
+- How long a time slice would be different for CPU bound tasks and I/0 bound tasks
+- **CPU Bound Tasks:**
+	- ![[Pasted image 20240924211718.png]]
+	- For CPU bound task, we really aren't concerned about wait time as the user want these tasks to finish faster, as compared to waiting for it's response, so as we can see the longer the time slice, the better the throughput and the better the avg completion time, however wait time is imp for I/0 bound task
+- **I/O Bound Tasks:**
+	- ![[Pasted image 20240924213205.png]]
+	- For I/O bound tasks if we assume that in each 1s an I/O operation is called upon, then even in 5s case there will be no difference if both the operation T1 and T2 are I/O bound processes as these will be interrupted by I/O and not the time slice instead
+	- So assuming that T1 is a CPU Bound Task, we can see that a shorter time slice means that the throughput is more as well as the wait time is lesser (which is an important factor in I/O bound processes)
+	- **Conclusion:**
+		- For I/O bound operations 
+			- Shorter time slices are preffered
+			- I/O bound processes can issue I/o operations earlier
+			- Higher CPU and device utilisaton because of this (basically because when an I/o is issue I will just pick up the next process)
+			- User perceived responsiveness is better
+		- For CPU bound operations
+			- Longer time slices are preffered
+			- Less time spent on context switching
+			- Efficient utilisation of CPU and more throughput
+
+### <u>Runqueue data structure for time sharing:</u>
+- We can make a data structure such that there exists multiple queues in the data structure of different time slice and priority and based on the type of task ie I/0 task / CPU bound task, we can put these into seperate queues and basically schedule accordingly to reduce time slicing overheads.
+			- ![[Pasted image 20240925211743.png]]
+- **Imp Point:** How do we decide which task is an I/O based or which task is CPU bound?
+#### <u>Multi Level Feedback queue</u>
+- We first put whatever task comes in a 8ms time slice
+	- If the task yeilds / requests and I/O operation before that it means we are fine with the current queue
+	- However if the task uses all of the 8ms on CPU bound activity ie it does not yield before it, then we put the task at somewhat lower time slice queue that is of 16ms
+- We repeat this process of demoting and promoting a thread inside this queue data structure
+	- ![[Pasted image 20240925212401.png]]
+- 
