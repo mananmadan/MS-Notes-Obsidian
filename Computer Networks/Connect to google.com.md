@@ -1,4 +1,3 @@
-
 # The Journey of `google.com` After Connecting to Wi-Fi
 
 This explanation outlines how your browser retrieves `google.com` after connecting to a Wi-Fi network, breaking down the process using the OSI model, including DHCP, TCP, HTTP, MAC addresses, NAT, packet breakdown, frame breakdown, routing tables, and DNS lookup.
