@@ -100,8 +100,8 @@
 	- **Conclusion:**
 		- For I/O bound operations 
 			- Shorter time slices are preffered
-			- I/O bound processes can issue I/o operations earlier
-			- Higher CPU and device utilisaton because of this (basically because when an I/o is issue I will just pick up the next process)
+			- I/O bound processes can issue I/O operations earlier
+			- Higher CPU and device utilisaton because of this (basically because when an I/O operation is issued I will just pick up the next process)
 			- User perceived responsiveness is better
 		- For CPU bound operations
 			- Longer time slices are preffered
@@ -118,4 +118,117 @@
 	- However if the task uses all of the 8ms on CPU bound activity ie it does not yield before it, then we put the task at somewhat lower time slice queue that is of 16ms
 - We repeat this process of demoting and promoting a thread inside this queue data structure
 	- ![[Pasted image 20240925212401.png]]
-- 
+#### <u>Linux O(1) scheduler</u>
+- It is called O(1) because it takes O(1) time to select / add tasks 
+- Task's having priority 0 - 99 are real time tasks and are scheduled by a real time scheduler
+- User task's are given priority 100 - 139
+	- By default a user task is given priority 120
+	- **Nice Value** : Default Priority + Nice Value == Ultimate Priority
+	- Nice value can be b/w -20 to +19, basically mapping it over the whole range of 100 - 139
+- ![[Pasted image 20241013130706.png]]
+- **Feedback Mechanism** 
+	- Linux  increases/decreases the priority of a task based on it's sleep time
+	- The more the sleep / idle time ***(this time is basically time spent when the cpu is empty)**
+		- It means that the task is more interactive / I/O bound, so we increase it's priority
+	- The less the sleep / idle time 
+		- It means that the task is more CPU based, as it's using up the CPU more so we decrease it's priority
+- **Time Slice and Priority Relation** (Slight Confusion!, need to be cleared up)
+	- For **I/O, interactive tasks**, the priority needs to be **increased**, this means that the number priority (priority number) is **decreased**, so like it will be decreased by 5
+		- Priority Number - 5
+		- ***CONFUSION!*** the diagram indicates in such a case, it's time slice will increase, but since it's an interactive task, shouldn't it's time slice be decreased??
+	- For **CPU Bound Tasks**, the priority needs to be decreased, this means that the priority number is increased by 5
+		- Priority Number + 5 
+		- Same confusion here, should the time slice be increased in this case?
+- ##### Requeue Structure in O(1) scheduler
+		- ![[Pasted image 20241013131847.png]]
+- Each of the tasks have has an **Active Array** and an **Expired Array**
+	- Active Array:
+		- A task will remain in the active array as long as it's time slice is active
+	- Expired Array
+		- A task will enter the expired array when it's time slice expires
+- When all the tasks in Active Array Are finished, the expired array will become the new Active Array and there will be a new Expired Array made
+- This also helps with the aging aspect, that high priority tasks will ultimately use up their time slice value and then be put in the expired array
+	- ![[Pasted image 20241013132700.png]]
+- This works in O(1), since it's a linked list per task, so selecting can be performed easily, more-over, the task is selected as the first bit that is set ie that has any tasks, so like there are 140 bits and the bits that will be set are the ones basically that will have any tasks, so we will select one of them and basically get the pointer to the linked list that we want
+
+#### <u>Linux CFS scheduler</u>
+- **Issues with the O(1) scheduler**
+	- Interactive tasks don't get handled properly
+		- If the time slice of an interactive task is expired, then it would have to wait for all the active tasks to be put in the expired list before that task is scheduled again, which leads to delays in interactive tasks
+	- There is no guarantee of fairness
+		- There is no such claim that each of the tasks will get a time slice proportional to their priorities
+- Solution
+	- In CFS Schedule all the tasks are measure by **VRUNTIME : virtual runtime**
+		- This is the amount of time spent on CPU
+	- Basic algo for CFS is pick the task with least vruntime, run it till it's greater than the next smallest task, pick the next smallest task
+	- To gaurantee preference to priority and niceness , vruntime per cpu unit of time is basically dependent on those, so for a higher priority task, vruntime will increase slowly compared to a lower priority task
+		- ![[Pasted image 20241013145232.png]]
+	- The runtime for this algo is O(log(n)), as the vruntime of tasks is managed in a red black tree, where addition takes log(n) time and selection can be done in O(1) time.
+	- ![[Pasted image 20241013145147.png]]
+#### <u>Scheduling in Multi-CPU Systems</u>
+- The type of systems discusses are SMP
+	- **SMP (Shared Memory Processor)**
+		- ![[Pasted image 20241013184917.png]]
+	- These have multiple processors that share the same main memory, but have different cache mechanisms and have basically a cache coherence structure
+	- L1, L2 Private Caches
+	- LLC Common Cache between the CPU 
+	- Main Memory is Common
+- When a thread is scheduled on a CPU, a lot of it's pages are loaded from the main memory in cache for faster access, so it's reasonable for efficiency reason that scheduler have **cache affinity**
+- We can mantain a Load Balance Runqueue per CPU
+	-  ![[Pasted image 20241013185635.png]]
+- We can mantain a hierarchical scheduler architechture, where a per-cpu runqueue is mantained and the scheduler can load balance b/w the CPU following factors in runqueue
+	- Length of the runqueue 
+	- Idle time of the CPU
+- ##### NUMA (Non-Uniform Memory Access) Systems
+	- ![[Pasted image 20241013190011.png]]
+	- It is possible to have systems where the main memory is divided amongst the CPU's, basically for each CPU there could exists certain memory nodes that can have faster accesses
+	- **Scheduling**
+		- In such a case the scheduling need to happen according to node affinity that the thread should be scheduled to the main memory that is having it's pages.
+		- In such a case also a hierarchical scheduling structure helps
+		- This is called NUMA Aware Scheduling
+
+ ### <u>HyperThreading/ Simultaneous Multi Threading</u>
+ 
+- ![[Pasted image 20241013211152.png]]
+- This is the case where in once cpu, multiple registers can be exposed so that a scheduler can run 2 threads on a single CPU instead of once, the context switching among such threads is very fast
+- **Basically multiple H/W supported execution contexts are available**
+#### <u>How is it Effective?</u> 
+- We know already that the condition for context switching is if
+	- (t_idle > 2 * t_cntxt_switching)
+	- Now it is seen that the time taken to context switch in case of hyperthreading scenarios is much faster than memory access even
+	- So essentially if we pair up a cpu bound task and a memory bound task, we will be able to hide the memory latency, and basically use up that time in CPU bound task
+- "Chip Multi Threaded Processes Need a new OS Scheduler " by Fedora Et Al
+- Assumptions in the paper
+	- ![[Pasted image 20241013211936.png]]
+- Now comparing up pairing different tasks CPU bound + CPU bound
+	- ![[Pasted image 20241013212026.png]]
+	- Performance degraded here, infact the performance degrades 2X here
+	- **Thing to notice here, that the memory is entirely empty here**
+	- Not that the instruction logic is per CPU, so like even if there is hyper threading enables, there would be contention for the ALU and like only one of the tasks will be read at a time
+- Memory Bound + Memory Bound 
+	- ![[Pasted image 20241013212301.png]]
+	- This is some what a better utilization than just having single Memory Bound task, but **here cpu cycles are getting wasted** and there is idle time
+- CPU Bound + Memory Bound
+	- ![[Pasted image 20241013212436.png]]
+	- This leads to complete utilization of the CPU
+#### <u>How To Find if the process is CPU Bound or Memory Bound ?</u> 
+- TODO: This should be updated more when paper is read
+- Basically this slide explains that standard measures such as sleep time would not work here, because process is not idle while it is accessing memory
+- For properties like this H/W has counters to inform the resources that a particular process is using like L1,L2, cache misses 
+	- perf and the profiling tools read these kind of H/W only to make their reports
+- Fedora paper suggest that some kind of hardware counter to track CPI .. cycles per instruction need to be made
+
+#### <u> Fedora Paper</u> 
+- Essentially the fedora paper states that cycles per instruction is a good count to measure whether a task is memory bound of CPU bound 
+- So in that paper processes are run with a simulator assuming that there is a hardware counter to track this and the scheduler knows this and schedules things accordingly.
+	- ![[Pasted image 20241018203722.png]]
+	- She ran this kind of workload on a 4 core cpu, and the results were as follows 
+		- ![[Pasted image 20241018203907.png]]
+     ##### Observations:
+     - Instruction per cycle should be max basically, because it indicates good CPU utilization
+     - In case of d and c, there were workloads that were closer to each other, that is similar workloads, that is either all CPU Bound and All memory bound paired together, leading to lower IPC
+     - In a and b there were mixed workloads essentially that had both cpu and memory paired together, so those had higher IPC due to lower contention of resources
+	     - **NOTE:**
+		     - What causes contention in a hyper threading platform is the processor pipeline
+		     - Basically the ability to read and like execute an instruction is limited to per physical core only, because only one ALU and etc.
+			 - ![[Pasted image 20241018204642.png]]

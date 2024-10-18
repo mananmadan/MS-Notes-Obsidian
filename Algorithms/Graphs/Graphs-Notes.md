@@ -45,7 +45,7 @@
 		- ![[Pasted image 20240923204906.png]]
 #### Topological Sorting
 - Topological sorting on a directed acyclical graph (DAG) can be obtained the vertices in decreasing order of post order numbers
-- **Sinks have the higher post order numbers, sources have the lowest post order numbers**
+- **Sinks have the lowest post order numbers, sources have the highest post order numbers**
 - So if we order from source to sink, then basically each edge will from left to right and thus we will obtain topological sorting
 - ![[Pasted image 20240923205402.png]]
 - This can be done in linear time, as DFS will take 0(n+m) time, and we will line up the vertices in an array of post orders (which will be min 1 and max 2n), then just iterate from back to front of the array and list out the vertices
@@ -56,7 +56,7 @@
  - A **source** is the one with the higher number of outgoing edges, a **sink** is one which has highest number of incoming edges
  - So an alternative way for topological sort would be 
 	 - Find a sink, delete all the edges
-	 - Find a new sink and repeate
+	 - Find a new sink and repeat
 - For example here, we can find w, eliminate all the edges of W, then the new sink will be Z or U, we can do so on and so forth to get a topological ordering
 ### Strongly Connected Components
 - This the alternative to connected components in the undirected graph
