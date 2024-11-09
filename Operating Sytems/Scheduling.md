@@ -232,3 +232,6 @@
 		     - What causes contention in a hyper threading platform is the processor pipeline
 		     - Basically the ability to read and like execute an instruction is limited to per physical core only, because only one ALU and etc.
 			 - ![[Pasted image 20241018204642.png]]
+	
+     ##### Conclusion:
+     - Despite the results, it is seen that in real workloads, the distinction in CPI is not that much and therefore, it can't be the only viable method to distinguish a process as CPU bound of memory bound  i.e even if we calculate CPI of major real work workloads, there values are not so precise to tell about the memory or cpu activity of a process
