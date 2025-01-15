@@ -1,0 +1,15 @@
+- 2 Foundation Courses with a B have to completed in one year 
+- Free Electives Min Grade C
+- Foundation Courses Min Grade B
+- Min GPA to Graduate 3
+- Max of 6 hours (2 Non CS Courses Can be taken)
+- Registration begins on January 3 and ends on January 11 at 2:30 AM IST
+ - **CANAVAS** First place to check when you have registered for a course
+ - Total Number of Enrolled + Total Number of Wait listed can never be greater than 7, which means can only enroll for one course
+ - Drop Deadline is January 11, 2:30 AM IST
+ - Withdrawl Deadline is March 13,2:30 AM IST
+ - If you sit out 3 or more consecutive semesters, you need to apply for readmission
+ - January 13 is fee payment deadline
+ - For Grade Substitution Form to be filled and mailed to OMCS Advicers
+ - What happens if I am not registered by the time Phase II registration has ended? Unfortunately, students cannot be added to a course(s) once Phase II registration has ended. Therefore, if you plan to be enrolled in that specific term, you may need to enroll in a backup course prior to the end of the active registration period if your first-choice course is not available.
+ - DEGREE WORKS IS THE TOOL FOR DEGREE PLANNING
