@@ -19,7 +19,7 @@
 
 ## After Registration
 
-- [ ] Pay your Spring 2025 [tuition and fees](http://www.bursar.gatech.edu/) by the fee payment deadline of January 13 at 4:00 PM ET.
+- [x] Pay your Spring 2025 [tuition and fees](http://www.bursar.gatech.edu/) by the fee payment deadline of January 13 at 4:00 PM ET.
 - [ ] Declare your [specialization](https://oscar.gatech.edu/) after Phase II registration has ended (or whenever you are ready to do so after that timeframe). Instructions on how to declare your specialization can be found [online](https://registrar.gatech.edu/info/concentration-management-oscar).
   - **Reminder:** OMSCS students may change their [specialization](https://omscs.gatech.edu/specializations) at any time, as long as it is not during an active period of registration.
 - [ ] Continue to check your [GT email account](https://mail.gatech.edu/) on a daily basis.

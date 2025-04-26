@@ -39,12 +39,9 @@ average_time_per_order =  total_time / total_orders
 - Threads are useful for a few reasons. They allow us to have speed up because we can parallelize problems. We get to benefit from a hot cache because we can specialize what a particular thread is doing. Using threads leads to implementations that have lower memory requirements and are cheaper to synchronize than implementations that are multiprocess. Threads are useful even on a single CPU because they allow us to hide latency of I/O operations.
 
 - What *is* useful?
-
-- For a matrix multiply application, we may care about the raw *execution time* of the application. For a web server application, we might care about the *throughput* of the application (number of requests/time) or we might care about the *response time*. For a hardware chip, we might care about the overall *utilization* increase of the hardware.
-
-- For any of these metrics, we might care about the average value, or the max/min value, or maybe even the value at a certain percentage. For example, we may consider that an application that completes a task in 3ms 95% of the time to be sufficient.
-
-- To evaluate some solution, and determine whether it is useful or not, it is important to determine the properties that we really care about. We call such properties **metrics**.
+	- For a matrix multiply application, we may care about the raw *execution time* of the application. For a web server application, we might care about the *throughput* of the application (number of requests/time) or we might care about the *response time*. For a hardware chip, we might care about the overall *utilization* increase of the hardware.
+	- For any of these metrics, we might care about the average value, or the max/min value, or maybe even the value at a certain percentage. For example, we may consider that an application that completes a task in 3ms 95% of the time to be sufficient.
+	- To evaluate some solution, and determine whether it is useful or not, it is important to determine the properties that we really care about. We call such properties **metrics**.
 
 ## <u>Performance Metrics</u>
 - A metric is a measurable or quantifiable property of a system that we are interested in that can be used to evaluate the system's behavior. For example, a metric can be the execution time (measurable property) of a software implementation to a problem (component of system we are interested in) which can be used to see if the implementation being analyzed is more performant than other implementations (system behavior evaluation).
@@ -59,25 +56,15 @@ average_time_per_order =  total_time / total_orders
 There are many more.
 
 - For example, in some systems we may not care so much when we get an answer, but rather when our job will start executing. This is known as **wait time**. Often, we would like for the value of this metric to be low. We would like to wait as little as possible for our jobs to start executing.
-
 - Throughput helps us evaluate the utility of a platform; that is, how many tasks will the platform complete in a given unit of time. This can be evaluated in the context of a single server or as complex a system as an entire datacenter.
-
 - If I own the data center, throughput may not be the metric that I am exclusively interested in. I might also be interested in **platform efficiency**, which measures how well resources are utilized to in order to deliver a certain measure of throughput. This matters because I make money as a result of high throughput (completing work quickly), but I also spend money to maintain my platform. A higher measure of platform efficiency means I have to spend less on my platform.
-
 - If I really just care about money, I can look at **performance per dollar**. If I want to know if I should buy the next greatest hardware platform, I should examine whether that cost that I incur in doing so will be offset by a boost in performance per dollar.
-
 - Many times, I am more concerned about energy requirements. I might look at **performance per watt** when making decisions about new pieces of hardware. If my energy costs are high, maybe the right purchase is a machine that is more energy efficient.
-
 - When looking to incorporate enterprise software into the system, another useful metric may be the **percentage of SLA violations**. It may not make sense to create a contract with a software company if the SLA violations on their products are very high.
-
 - Some metrics are not super useful to maximize. For example, "smooth" video requires ~30fps. It doesn't make sense to maximize the fps, but rather the goal should be to stay above or around 30fps for some high percentage of the time. In this case **client-perceived performance** is the goal, not raw performance.
-
 - You may be interested in just one metric before making decisions, or you may need to aggregate metrics or even derive new metrics in order to accurately understand the system that you are evaluating.
-
 - In summary, a metric is some measurable quantity we can use to reason about the behavior of a system.
-
 - Ideally, we will obtain these measurements running real software on real machines with real workloads. Often, this is not feasible for many different reasons. In these cases, we may have to settle on "toy" experiments that are *representative* of realistic situations that we may encounter.
-
 - We refer to these experimental settings as a **testbed**. The testbed tells us where/how the experiments were carried out and what were the relevant metrics being gathered.
 
 ### <u> Really … Are Threads Useful </u>?
@@ -176,21 +163,13 @@ There are many more.
 - When we talked about the many-to-one user level thread to kernel level thread model, we saw that a user level thread that blocks will block the entire process.  
 
 - A similar problem can occur in the event driven model. If one of the handlers initiates a blocking call, the entire process can be blocked.
-
 - One way to circumvent this issue is to use **asynchronous I/O operations**. In asynchronous system calls the operating system obtains all of the relevant information from the stack, and either learns where to return results, or tells the caller where to get results later. Asynchronous calls let the process or thread continue execution now and check their results later.
-
 - Asynchronous calls require a multithreaded kernel. While the caller thread continues execution, another kernel thread must do all the waiting that is needed to get the I/O results. Asynchronous operations can also benefit from the hardware devices. For example, a thread can pass a request over to a device and the device can let the calling thread know at a later time the results of its request.
-
 - The takeaway is that when we perform asynchronous I/O operations, our thread will not be blocked in the kernel while the I/O operation actually takes place.
-
 - Asynchronous I/O operations fit nicely with the event-driven model.
-
 - Asynchronous I/O calls are not available on all platforms or for all types of devices. When these calls are not available, we need **helpers**.
-
 - When the handler needs to initiate an I/O operation that can block, the handler passes the call to the operation to a helper, and returns to the event dispatcher. The helper will be the one that handles the blocking I/O operation and interact with the dispatcher as necessary.
-
 - The communication with the helper can be with sockets or pipes, which both present a file descriptor like interface, which means that `select` and `poll` still work.
-
 - In doing this, the synchronous I/O call is handled by the helper. The helper will block, but the main event loop will not! Although we don't have asynchronous system calls, we can fake it to an extent by delegating blocking calls to processes.
 
 - ![](https://assets.omscs.io/notes/007D0E12-DC9B-4787-91A9-FCEA8EB25A4F.png)

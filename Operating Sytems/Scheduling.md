@@ -81,7 +81,7 @@
 - ![[Pasted image 20240924210441.png]]
 - <u>PROS</u>:
 	- Short task finish sooner
-	- Response time is increased, for example if 3 task come together, atleast each of them will be completed for 1s
+	- Response time is increased, for example if 3 task come together, at least each of them will be completed for 1s
 	- lengthy I/0 operations finish sooner
 - <u>CONS</u>:
 	- After each time slice we need to spend a certain time in context switching, deciding which task to pick up next **overhead**

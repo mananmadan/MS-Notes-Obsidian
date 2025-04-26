@@ -1,0 +1,12 @@
+- gfserver_t
+	- port
+	- maxpending requests (backlog?)
+	- handler
+		- gfc_context
+			- All the socket information we need per request to be handled, because each handler will get this struct to identify a particular request
+			- So this will be new_fd, stuff like that 
+		- path
+		- void* handler args
+- #### TODO
+- [x] Query Reciever
+- [x] Query Parser

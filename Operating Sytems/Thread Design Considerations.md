@@ -113,38 +113,30 @@ A process data structure has information about the user and points to the virtua
 
 ![](https://assets.omscs.io/notes/69BD0A17-1A53-48B8-940A-9B4B96722D25.png)
 
-## Basic Thread Management Interaction
+## <u>Basic Thread Management Interaction</u>
 
-Consider a process with four user threads. However, the process is such that at any given point in time the actual level of concurrency is two. It always happens that two of its threads are blocking on, say, IO and the other two threads are executing.
+- Consider a process with four user threads. However, the process is such that at any given point in time the actual level of concurrency is two. It always happens that two of its threads are blocking on, say, IO and the other two threads are executing.
+- If the operating system has a limit on the number of kernel threads that it can support, the application might have to request a fixed number of threads to support it. The application might select two kernel level threads, given its concurrency.
+- When the process starts, maybe the operating system only allocates one kernel level thread to it. The application may specify (through a `set_concurrency` system call) that it would like two threads, and another thread will be allocated.
 
-If the operating system has a limit on the number of kernel threads that it can support, the application might have to request a fixed number of threads to support it. The application might select two kernel level threads, given its concurrency.
+- Consider the scenario where the two user level threads that are scheduled on the kernel level threads happen to be the two that block. The kernel level threads block as well. This means that the whole process is blocked, even though there are user level threads that can make progress. The user threads have no way to know that the kernel threads are about to block, and has no way to decide before this event occurs.
+- What would be helpful is if the kernel was able to signal to the user level library _before_ blocking, at which point the user level library could potentially request more kernel level threads. The kernel could allocate another thread to the process temporarily to help complete work, and deallocate the thread it becomes idle.
+- Generally, the problem is that the user level library and the kernel have no insight into one another. To solve this problem, the kernel exposes system calls and special signals to allow the kernel and the ULT library to interact and coordinate.
 
-When the process starts, maybe the operating system only allocates one kernel level thread to it. The application may specify (through a `set_concurrency` system call) that it would like two threads, and another thread will be allocated.
+## <u>Thread Management Visibility and Design</u>
 
-Consider the scenario where the two user level threads that are scheduled on the kernel level threads happen to be the two that block. The kernel level threads block as well. This means that the whole process is blocked, even though there are user level threads that can make progress. The user threads have no way to know that the kernel threads are about to block, and has no way to decide before this event occurs.
+- The kernel sees:
+	- Kernel level threads
+	- CPUs
+	- Kernel level scheduler
 
-What would be helpful is if the kernel was able to signal to the user level library _before_ blocking, at which point the user level library could potentially request more kernel level threads. The kernel could allocate another thread to the process temporarily to help complete work, and deallocate the thread it becomes idle.
+- The user level library sees:
+	- User level threads
+	- Available kernel level threads
 
-Generally, the problem is that the user level library and the kernel have no insight into one another. To solve this problem, the kernel exposes system calls and special signals to allow the kernel and the ULT library to interact and coordinate.
-
-## Thread Management Visibility and Design
-
-The kernel sees:
-
-- Kernel level threads
-- CPUs
-- Kernel level scheduler
-
-The user level library sees:
-
-- User level threads
-- Available kernel level threads
-
-The user level library can request that one of its threads be bound to a kernel level thread. This means that this user level thread will always execute on top of a specific kernel level thread. This may be useful if in turn the kernel level thread is pinned to a particular CPU.
-
-If a user level thread acquires a lock while running on top of a kernel level thread and that kernel level thread gets preempted, the user level library scheduler will cycle through the remaining user level threads and try to schedule them. If they need the lock, none will be able to execute and time will be wasted until the thread holding the lock is scheduled again.
-
-The user level library will make scheduling changes that the kernel is not aware of which will change the ULT/KLT mapping in the many to many case. Also, the kernel is unaware of the data structures used by the user level, such as mutexes and wait queues.
+- The user level library can request that one of its threads be bound to a kernel level thread. This means that this user level thread will always execute on top of a specific kernel level thread. This may be useful if in turn the kernel level thread is pinned to a particular CPU.
+- If a user level thread acquires a lock while running on top of a kernel level thread and that kernel level thread gets preempted, the user level library scheduler will cycle through the remaining user level threads and try to schedule them. If they need the lock, none will be able to execute and time will be wasted until the thread holding the lock is scheduled again.
+- The user level library will make scheduling changes that the kernel is not aware of which will change the ULT/KLT mapping in the many to many case. Also, the kernel is unaware of the data structures used by the user level, such as mutexes and wait queues.
 
 We should look at 1:1 ULT:KLT models.
 
@@ -189,7 +181,7 @@ Once a thread is no longer needed, the memory associated with it should be freed
 
 When a thread exits, the data structures are not immediately freed. Instead, the thread is marked as being on **death row**. Periodically, a special **reaper** thread will perform garbage collection on these thread data structures. If a request for a thread comes in before a thread on death row is reaped, the thread structure can be reused, which results in some performance gains
 
-### Interrupts && Signals
+### <u>Interrupts && Signals</u>
 - ***Interrupts:***
 	- These are generated by external devices, or devices other that CPU like (timers, I/0 devices)
 	- These appear asynchronously ie does not necessarily a response to a certain event
