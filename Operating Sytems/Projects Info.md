@@ -1,8 +1,0 @@
-- https://eugeneyan.com/writing/omscs-cs6200-introduction-to-operating-systems/
- - A practice project could be to implement a file server
-	 - One client asks for a file in the path
-	 - The server has to look up the contents of the file in the path, parse them and and send this buffer to the client
-	 - The client would receive this buffer and put it into a file
-	 - Can do it in a single thread, and write a script, the basically randomly spawns upon clients and requests them
-	 - Could next do it in multi threaded situation and then compare throughput
-	 - Single threaded and multi threaded could be based on a flag
