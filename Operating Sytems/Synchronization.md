@@ -11,88 +11,68 @@
 - One of the most basic synchronization constructs is the **spinlock**.
 - In some ways spinlocks are like mutexes. For example, a spinlock is used to provide mutual exclusion, and it has certain constructs that are similar to the mutex lock/unlock operations.
  - However, spinlocks are different from mutexes in an important way.
+- When a spinlock is locked, and a thread is attempting to lock it, that thread is not blocked. Instead, the thread is spinning. It is running on the CPU and repeatedly checking to see if the lock has become free. With mutexes, the thread attempting to lock the mutex would have relinquished the CPU and allowed another thread to run. With spinlocks, the thread will burn CPU cycles until the lock becomes free or until the thread becomes preempted for some reason.
+- Because of their simplicity, spinlocks are a basic synchronization primitive that can be used to implement more complicated synchronization constructs.
 
-When a spinlock is locked, and a thread is attempting to lock it, that thread is not blocked. Instead, the thread is spinning. It is running on the CPU and repeatedly checking to see if the lock has become free. With mutexes, the thread attempting to lock the mutex would have relinquished the CPU and allowed another thread to run. With spinlocks, the thread will burn CPU cycles until the lock becomes free or until the thread becomes preempted for some reason.
+## <u>Semaphores</u>
 
-Because of their simplicity, spinlocks are a basic synchronization primitive that can be used to implement more complicated synchronization constructs.
+- As a synchronization construct, **semaphores** allow us to express count related synchronization requirements.
+- Semaphores are initialized with an integer value. Threads arriving at a semaphore with a nonzero value will decrement the value and proceed with their execution. Threads arriving at a semaphore with a zero value will have to wait. As a result, the number of threads that will be allowed to proceed at a given time will equal the initialization value of the semaphore.
+- When a thread leaves the critical section, it signals the semaphore, which will increment the semaphore's counter.
+- If a semaphore is initialized with a 1 - a binary semaphore - it will behave like a mutex, only allowing one thread at a time to pass.
 
-## [](https://www.omscs-notes.com/operating-systems/synchronization-constructs/#semaphores)Semaphores
+## <u>POSIX Semaphores</u>
 
-As a synchronization construct, **semaphores** allow us to express count related synchronization requirements.
+- The simple POSIX semaphore API defines one type `sem_t` as well as three operations that manipulate that type. These operations create the semaphore, wait on the semaphore, and unlock the semaphore.
 
-Semaphores are initialized with an integer value. Threads arriving at a semaphore with a nonzero value will decrement the value and proceed with their execution. Threads arriving at a semaphore with a zero value will have to wait. As a result, the number of threads that will be allowed to proceed at a given time will equal the initialization value of the semaphore.
+- ![](https://assets.omscs.io/notes/EA5326AD-08F0-47F0-9ACC-0640A0BFC497.png)
 
-When a thread leaves the critical section, it signals the semaphore, which will increment the semaphore's counter.
+- **NB** The pshared flag indicates whether the semaphore is to be shared across processes.
 
-If a semaphore is initialized with a 1 - a binary semaphore - it will behave like a mutex, only allowing one thread at a time to pass.
+## <u>Reader/Writer Locks</u>
 
-## [](https://www.omscs-notes.com/operating-systems/synchronization-constructs/#posix-semaphores)POSIX Semaphores
+- When specifying synchronization requirements, it is sometimes useful to distinguish among different types of resource access.
+- For instance, we commonly want to distinguish "read" accesses - those that do not modify a shared resource - from "write" accesses - those that do modify a shared resource. For read accesses, a resource can be shared concurrently while write accesses requires exclusive access to a resource.
+- This is a common scenario and, as a result, many operating systems and language runtimes support a construct known as **reader/writer** locks.
+- A reader/writer lock behaves similarly to a mutex; however, now the developer only has to specify the type of access that they wish to perform - read vs. write - and the lock takes care of access control behind the scenes.
 
-The simple POSIX semaphore API defines one type `sem_t` as well as three operations that manipulate that type. These operations create the semaphore, wait on the semaphore, and unlock the semaphore.
+## <u>Using Reader/Writer Locks</u>
 
-![](https://assets.omscs.io/notes/EA5326AD-08F0-47F0-9ACC-0640A0BFC497.png)
+- Here is the primary API for reader/writer locks in Linux.
 
-**NB** The pshared flag indicates whether the semaphore is to be shared across processes.
+- ![](https://assets.omscs.io/notes/B9FC4930-CACD-4388-BF04-A83D95487B84.png)
 
-## [](https://www.omscs-notes.com/operating-systems/synchronization-constructs/#readerwriter-locks)Reader/Writer Locks
+- As usual, we have a datatype - `rwlock_t` and we perform operations on that data type. We can lock/unlock the lock for reads as well as for writes.
+- Reader/writer locks are supported in many operating systems and language runtimes.
+- However, the semantics may be different across different environments.
+- Some implementations refer to reader/writer locks as **shared/exclusive** locks.
+- Implementations may differ on how recursively-obtained read locks are unlocked. When unlocking a recursive read lock, some implementations unlock all the recursive locks, while others only unlock the most recently acquired lock.
+- Some implementations allow readers to convert their lock into a writer lock mid-execution, while other implementations do not allow this upgrade.
+- Some implementations block an incoming reader if there is a writer already waiting, while others will let this reader acquire its lock.
 
-When specifying synchronization requirements, it is sometimes useful to distinguish among different types of resource access.
+## <u>Monitors</u>
 
-For instance, we commonly want to distinguish "read" accesses - those that do not modify a shared resource - from "write" accesses - those that do modify a shared resource. For read accesses, a resource can be shared concurrently while write accesses requires exclusive access to a resource.
+- All of the constructs that we have seen so far require developers to explicitly invoke the lock/unlock and wait/signal operations. As we have seen, this introduces more opportunity to make errors.
+- **Monitors** are a higher level synchronization construct that allow us to avoid manually invoking these synchronization operations. A monitor will specify a shared resource, the entry procedures for accessing that resource, and potential condition variables used to wake up different types of waiting threads.
+- When invoking the entry procedure, all of the necessary locking and checking will take place by the monitor behind the scenes. When a thread is done with a shared resource and is exiting the procedure, all of the unlocking and potential signaling is again performed by the monitor behind the scenes.
 
-This is a common scenario and, as a result, many operating systems and language runtimes support a construct known as **reader/writer** locks.
+## <u>More Synchronization Constructs</u>
 
-A reader/writer lock behaves similarly to a mutex; however, now the developer only has to specify the type of access that they wish to perform - read vs. write - and the lock takes care of access control behind the scenes.
+- **Serializers** make it easier to define priorities and also hide the need for explicit signaling and explicit use of condition variables from the programmer.
+- **Path Expressions** require that a programmer specify a regular expression that captures the correct synchronization behavior. As opposed to using locks, the programmer would specify something like "Many Reads, Single Write", and the runtime will make sure that the way the operations are interleaved satisfies the regular expression.
+- **Barriers** are like reverse semaphores. While a semaphore allows n threads to proceed before it blocks, a barrier blocks until n threads arrive at the barrier point. Similarly, **Rendezvous Points** also wait for multiple threads to arrive at a particular point in execution.
+- To further boost scalability and efficiency metrics, there are efforts to achieve concurrency without explicitly locking and waiting. These **wait-free synchronization** constructs are optimistic in the sense that they bet on the fact that there won't be any concurrent writes and that it is safe to allow reads to proceed concurrently. An example of this is **read-copy-update** (RCU) lock that is part of the Linux kernel.
 
-## [](https://www.omscs-notes.com/operating-systems/synchronization-constructs/#using-readerwriter-locks)Using Reader/Writer Locks
+- All of these methods require some support from the underlying hardware to _atomically_ make updates to a memory location. This is the only way they can actually guarantee that a lock is properly acquired and that protected state changes are performed in a safe, race-free way.
 
-Here is the primary API for reader/writer locks in Linux.
+## <u>Sync Building Block Spinlock</u>
 
-![](https://assets.omscs.io/notes/B9FC4930-CACD-4388-BF04-A83D95487B84.png)
+- We will now focus on "The Performance of Spin Lock Alternatives for Shared Memory Multiprocessors", a paper that discusses different implementations of spinlocks. Since spinlocks are one of the most basic synchronization primitives and are used to create more complex synchronization constructs, this paper will help us understand both spinlocks and their higher level counterparts.
 
-As usual, we have a datatype - `rwlock_t` and we perform operations on that data type. We can lock/unlock the lock for reads as well as for writes.
+## <u>Need for Hardware Support</u>
 
-Reader/writer locks are supported in many operating systems and language runtimes.
-
-However, the semantics may be different across different environments.
-
-Some implementations refer to reader/writer locks as **shared/exclusive** locks.
-
-Implementations may differ on how recursively-obtained read locks are unlocked. When unlocking a recursive read lock, some implementations unlock all the recursive locks, while others only unlock the most recently acquired lock.
-
-Some implementations allow readers to convert their lock into a writer lock mid-execution, while other implementations do not allow this upgrade.
-
-Some implementations block an incoming reader if there is a writer already waiting, while others will let this reader acquire its lock.
-
-## [](https://www.omscs-notes.com/operating-systems/synchronization-constructs/#monitors)Monitors
-
-All of the constructs that we have seen so far require developers to explicitly invoke the lock/unlock and wait/signal operations. As we have seen, this introduces more opportunity to make errors.
-
-**Monitors** are a higher level synchronization construct that allow us to avoid manually invoking these synchronization operations. A monitor will specify a shared resource, the entry procedures for accessing that resource, and potential condition variables used to wake up different types of waiting threads.
-
-When invoking the entry procedure, all of the necessary locking and checking will take place by the monitor behind the scenes. When a thread is done with a shared resource and is exiting the procedure, all of the unlocking and potential signaling is again performed by the monitor behind the scenes.
-
-## [](https://www.omscs-notes.com/operating-systems/synchronization-constructs/#more-synchronization-constructs)More Synchronization Constructs
-
-**Serializers** make it easier to define priorities and also hide the need for explicit signaling and explicit use of condition variables from the programmer.
-
-**Path Expressions** require that a programmer specify a regular expression that captures the correct synchronization behavior. As opposed to using locks, the programmer would specify something like "Many Reads, Single Write", and the runtime will make sure that the way the operations are interleaved satisfies the regular expression.
-
-**Barriers** are like reverse semaphores. While a semaphore allows n threads to proceed before it blocks, a barrier blocks until n threads arrive at the barrier point. Similarly, **Rendezvous Points** also wait for multiple threads to arrive at a particular point in execution.
-
-To further boost scalability and efficiency metrics, there are efforts to achieve concurrency without explicitly locking and waiting. These **wait-free synchronization** constructs are optimistic in the sense that they bet on the fact that there won't be any concurrent writes and that it is safe to allow reads to proceed concurrently. An example of this is **read-copy-update** (RCU) lock that is part of the Linux kernel.
-
-All of these methods require some support from the underlying hardware to _atomically_ make updates to a memory location. This is the only way they can actually guarantee that a lock is properly acquired and that protected state changes are performed in a safe, race-free way.
-
-## [](https://www.omscs-notes.com/operating-systems/synchronization-constructs/#sync-building-block-spinlock)Sync Building Block Spinlock
-
-We will now focus on "The Performance of Spin Lock Alternatives for Shared Memory Multiprocessors", a paper that discusses different implementations of spinlocks. Since spinlocks are one of the most basic synchronization primitives and are used to create more complex synchronization constructs, this paper will help us understand both spinlocks and their higher level counterparts.
-
-## [](https://www.omscs-notes.com/operating-systems/synchronization-constructs/#need-for-hardware-support)Need for Hardware Support
-
-We need the checking of the lock value and the setting of the lock value to happen **atomically**, so that we can guarantee that only one thread at a time can successfully obtain the lock.
-
-Here is the current implementation of a spinlock locking operation that does not work.
+- We need the checking of the lock value and the setting of the lock value to happen **atomically**, so that we can guarantee that only one thread at a time can successfully obtain the lock.
+- Here is the current implementation of a spinlock locking operation that does not work.
 
 ```
 spinlock_lock(lock) {
@@ -102,21 +82,19 @@ spinlock_lock(lock) {
 }
 ```
 
-The problem with this implementation is that it takes multiple cycles to perform the check and the set and during these cycles threads can be interleaved in arbitrary ways.
+- The problem with this implementation is that it takes multiple cycles to perform the check and the set and during these cycles threads can be interleaved in arbitrary ways.
+- To make this work, we have to rely on hardware-supported atomic instructions.
 
-To make this work, we have to rely on hardware-supported atomic instructions.
+## <u>Atomic Instructions</u>
 
-## [](https://www.omscs-notes.com/operating-systems/synchronization-constructs/#atomic-instructions)Atomic Instructions
+- Each type of hardware will support a number of atomic instructions. Some examples include
 
-Each type of hardware will support a number of atomic instructions. Some examples include
+	- `test_and_set`
+	- `read_and_increment`
+	- `compare_and_swap`
 
-- `test_and_set`
-- `read_and_increment`
-- `compare_and_swap`
-
-Each of these operations performs some multi step, multi cycle operation. Because they are atomic instructions, however, the hardware makes some guarantees. First, these operations will happen atomically; that is, completely or not at all. In addition, the hardware guarantees mutual exclusion - threads on multiple cores cannot perform the atomic operations in parallel. All concurrent attempts to execute an instruction will be queued and performed serially.
-
-Here is a new implementation for a spinlock locking operation which uses an atomic instruction.
+- Each of these operations performs some multi step, multi cycle operation. Because they are atomic instructions, however, the hardware makes some guarantees. First, these operations will happen atomically; that is, completely or not at all. In addition, the hardware guarantees mutual exclusion - threads on multiple cores cannot perform the atomic operations in parallel. All concurrent attempts to execute an instruction will be queued and performed serially.
+ - Here is a new implementation for a spinlock locking operation which uses an atomic instruction.
 
 ```
 spinlock_lock(lock) {
@@ -124,127 +102,94 @@ spinlock_lock(lock) {
 }
 ```
 
-When the first thread arrives, `test_and_set` looks at the value that `lock` points to. This value will initially be zero. `test_and_set` atomically sets the value to one, and returns zero. `busy` is equal to one. Thus, the first thread can proceed. When subsequent threads arrive, `test_and_set` will look at the value - which is set - and just return it. These threads will spin.
+- When the first thread arrives, `test_and_set` looks at the value that `lock` points to. This value will initially be zero. `test_and_set` atomically sets the value to one, and returns zero. `busy` is equal to one. Thus, the first thread can proceed. When subsequent threads arrive, `test_and_set` will look at the value - which is set - and just return it. These threads will spin.
 
-Which specific atomic instructions are available on a given platform varies from hardware to hardware. There may be differences in the efficiencies with which different atomic operations execute on different architectures. For this reason, software built with specific atomic instructions needs to be ported; that is, we need to make sure the implementation uses one of the atomic instructions available on the target platform. We also have to make sure that the software is optimized so that it uses the most efficient atomics on a target platform and uses them in an efficient way.
+- Which specific atomic instructions are available on a given platform varies from hardware to hardware. There may be differences in the efficiencies with which different atomic operations execute on different architectures. For this reason, software built with specific atomic instructions needs to be ported; that is, we need to make sure the implementation uses one of the atomic instructions available on the target platform. We also have to make sure that the software is optimized so that it uses the most efficient atomics on a target platform and uses them in an efficient way.
 
-## [](https://www.omscs-notes.com/operating-systems/synchronization-constructs/#shared-memory-multiprocessors)Shared Memory Multiprocessors
+## <u>Shared Memory Multiprocessors</u>
 
-A multiprocessor system consists of more than one CPU and some memory unit that is accessible to all of these CPUs. That is, the memory component is shared by the CPUs.
+- A multiprocessor system consists of more than one CPU and some memory unit that is accessible to all of these CPUs. That is, the memory component is shared by the CPUs.
+- ![](https://assets.omscs.io/notes/8A94ED90-9931-476A-BA86-570434DB54A3.png)
+- In the interconnect-based configuration, multiple memory references can be in flight at a given moment, one to each connected memory module. In a bus-based configuration, the shared bus can only support one memory reference at a time.
+- Shared memory multiprocessors are also referred to as symmetric multiprocessors, or just SMPs.
+- Each of the CPUs in an SMP platform will have a cache.
 
-![](https://assets.omscs.io/notes/8A94ED90-9931-476A-BA86-570434DB54A3.png)
+- ![](https://assets.omscs.io/notes/6FBD6B73-A5F8-45C8-AF72-BEBBB7EA9B47.png)
 
-In the interconnect-based configuration, multiple memory references can be in flight at a given moment, one to each connected memory module. In a bus-based configuration, the shared bus can only support one memory reference at a time.
+- In general, access to the cache data is faster than access to data in main memory. Put another way, caches hide memory latency. This latency is even more pronounced in shared memory systems because there may be contention amongst different CPUs for the shared memory components. This contention will cause memory accesses to be delayed, making cached lookups appear that much faster.
 
-Shared memory multiprocessors are also referred to as symmetric multiprocessors, or just SMPs.
+- When CPUs perform a write, many things can happen.
+- For example, we may not even allow a CPU to write to its cache. A write will go directly to main memory, and any cache references will be invalidated. This is called **no-write**.
+- As one alternative, the CPU write may be applied both to the cache and in memory. This is called **write-through**.
+- A final alternative is to apply the write immediately to the cache, and perform the write in main memory at some later point in time, perhaps when the cache entry is evicted. This is called **write-back**.
 
-Each of the CPUs in an SMP platform will have a cache.
+## Cache Coherence
 
-![](https://assets.omscs.io/notes/6FBD6B73-A5F8-45C8-AF72-BEBBB7EA9B47.png)
+- What happens when multiple CPUs reference the same data?
 
-In general, access to the cache data is faster than access to data in main memory. Put another way, caches hide memory latency. This latency is even more pronounced in shared memory systems because there may be contention amongst different CPUs for the shared memory components. This contention will cause memory accesses to be delayed, making cached lookups appear that much faster.
+- ![](https://assets.omscs.io/notes/B8415B29-8C25-4E4B-9735-AC1A2591DD34.png)
 
-When CPUs perform a write, many things can happen.
+ - On some architectures this problem needs to be dealt with completely in software; otherwise, the caches will be incoherent. For instance, if one CPU writes a new version of `X` to its cache, the hardware will not update the value across the other CPU caches. These architectures are called **non-cache-coherent** (NCC) architectures.
+- On **cache-coherent** (CC) architectures, the hardware will take care of all of the necessary steps to ensure that the caches are coherent. If one CPU writes a new version of `X` to its cache, the hardware will step in and ensure that the value is updated across CPU caches.
 
-For example, we may not even allow a CPU to write to its cache. A write will go directly to main memory, and any cache references will be invalidated. This is called **no-write**.
+- There are two basic strategies by which the hardware can achieve cache coherence.
 
-As one alternative, the CPU write may be applied both to the cache and in memory. This is called **write-through**.
+	- Hardware using the **write-invalidate** (WI) strategy will invalidate all cache entries of `X` once one CPU updates its copy of `X`. Future references to invalidated cache entries will have to pass through to main memory before being re-cached.
+	- Hardware using the **write-update** (WU) strategy will ensure that all cache entries of `X` are updated once one CPU updates its copy of `X`. Subsequent accesses of `X` by any of the CPUs will continue to be served by the cache.
 
-A final alternative is to apply the write immediately to the cache, and perform the write in main memory at some later point in time, perhaps when the cache entry is evicted. This is called **write-back**.
+- With write-invalidate, we pose lower bandwidth requirements on the shared interconnect in the system. This is because we don't have to send the value of `X`, but rather just its address so it can be invalidated amongst the other caches. Once a cache invalidation occurs, subsequent changes to `X` won't require subsequent invalidations: a cache either has an entry for `X` or it doesn't.
+- If `X` isn't needed on any of the other CPUs anytime soon, its possible to amortize the cost of the coherence traffic over multiple changes. `X` can change multiple times on one CPU before its value is needed on another CPU.
+ - For write-update architectures, the benefit is that the `X` will be available immediately on the other CPUs that need to access it. We will not have to pay the cost of a main memory access. Programs that will need to access the new value of`X` immediately on another CPU will benefit from this design.
 
-## [](https://www.omscs-notes.com/operating-systems/synchronization-constructs/#cache-coherence)Cache Coherence
+- The use of write-update or write-invalidate is determined by the hardware supporting your platform. You as the software developer have no say in which strategy is used.
 
-What happens when multiple CPUs reference the same data?
+## <u>Cache Coherence and Atomics</u>
 
-![](https://assets.omscs.io/notes/B8415B29-8C25-4E4B-9735-AC1A2591DD34.png)
+- Let's consider a scenario in which we have two CPUs. Each CPU needs to perform an atomic operation concerning `X`, and both CPUs have a reference to `X` present in their caches.
+-  When an atomic instruction is performed against the cached value of `X` on one CPU, it is really challenging to know whether or not an atomic instruction will be attempted on the cached value of `X` on another CPU. We obviously cannot have incoherent cache references between CPUs: this will affect the correctness of our applications.
+- Atomic operations always bypass the caches and are issued directly to the memory location where the particular target variable is stored.
+- By forcing atomic operations to go directly to the memory controller, we enforce a central entry point where all of the references can be ordered and synchronized in a unique manner. None of the race conditions that could have occurred had we let atomic update the cache can occur now.
+- That being said, atomic instructions will take much longer than other types of instructions, since they can never leverage the cache. Not only will they always have to access main memory, but they will also have to contend on that memory.
+- In addition, in order to guarantee atomic behavior, we have to generate the coherence traffic to either update or invalidate all of the cached references to `X`, regardless of whether `X` changed. This is a decision that was made to err on the side of safety.
+ - In summary, atomic instructions on SMP systems are more expensive than on single CPU system because of bus or I/C contention. In addition, atomics in general are more expensive because they bypass the cache and always trigger coherence traffic.
 
-On some architectures this problem needs to be dealt with completely in software; otherwise, the caches will be incoherent. For instance, if one CPU writes a new version of `X` to its cache, the hardware will not update the value across the other CPU caches. These architectures are called **non-cache-coherent** (NCC) architectures.
+## Spinlock Performance Metrics
 
-On **cache-coherent** (CC) architectures, the hardware will take care of all of the necessary steps to ensure that the caches are coherent. If one CPU writes a new version of `X` to its cache, the hardware will step in and ensure that the value is updated across CPU caches.
+- We want the spinlock to have _low latency_. We can define latency as the time it takes a thread to acquire a free lock. Ideally, we want the thread to be able to acquire a free lock immediately with a single atomic instruction.
+- In addition, we want the spinlock to have _low delay/waiting time_. We can define delay as the amount of time required for a thread to stop spinning and acquire a lock that has been freed. Again, we ideally would want the thread to be able to stop spinning and acquire a free lock immediately.
+ - Finally, we would like a design that _reduces contention_ on the shared bus or interconnect. By contention, we mean the contention due to the actual atomic memory references as well as the subsequent coherence traffic. Contention is bad because it will delay any other CPU that is trying to access memory. Most pertinent to our use case though, contention will also delay the acquisition and release of the spinlock.
 
-There are two basic strategies by which the hardware can achieve cache coherence.
+## <u>Test and Set Spinlock</u>
 
-Hardware using the **write-invalidate** (WI) strategy will invalidate all cache entries of `X` once one CPU updates its copy of `X`. Future references to invalidated cache entries will have to pass through to main memory before being re-cached.
+- Here is the API for the **test-and-set spinlock**.
+- ![](https://assets.omscs.io/notes/5CB26CEB-E617-4CBC-8123-3375C2C6875D.png)
+- The `test_and_set` instruction is a very common atomic that most hardware platforms support.
+- From a latency perspective, this spinlock is as good as it gets. We only execute one atomic operation, and there is no way we can do better than this.
+- Regarding delay, this implementation could perform well. We are continuously just spinning on the atomic. As soon as the lock becomes free, the very next call to `test_and_set` - which is the very next instruction, given that we are spinning on the atomic - will immediately detect that, and the thread will acquire the lock and exit the loop.
+- From a contention perspective this lock does not perform well. As long as the threads are spinning on the `test_and_set` instruction, the processor has to continuously go to main memory on each instruction. This will delay all other CPUs that need to access memory.
+- The real problem with this implementation is that we are continuously spinning on the atomic instruction. Regardless of cache coherence, we are forced to constantly waste time going to memory every time we execute the `test_and_set` instruction.
 
-Hardware using the **write-update** (WU) strategy will ensure that all cache entries of `X` are updated once one CPU updates its copy of `X`. Subsequent accesses of `X` by any of the CPUs will continue to be served by the cache.
+## <u>Test and Test and Set Spinlock</u>
 
-With write-invalidate, we pose lower bandwidth requirements on the shared interconnect in the system. This is because we don't have to send the value of `X`, but rather just its address so it can be invalidated amongst the other caches. Once a cache invalidation occurs, subsequent changes to `X` won't require subsequent invalidations: a cache either has an entry for `X` or it doesn't.
+- The problem with the previous implementation is that all of the CPUs are spinning on the atomic operation. Let's try to separate the test part - checking the value of the lock - from the atomic.
+- The intuition is that CPUs can potentially test their cached copy of the lock and only execute the atomic if it detects that its cached copy has changed.
+- Here is the resulting spinlock `lock` operation.
 
-If `X` isn't needed on any of the other CPUs anytime soon, its possible to amortize the cost of the coherence traffic over multiple changes. `X` can change multiple times on one CPU before its value is needed on another CPU.
+- ![](https://assets.omscs.io/notes/C46BDD52-2F95-4EB4-8FA3-D10C244CF546.png)
 
-For write-update architectures, the benefit is that the `X` will be available immediately on the other CPUs that need to access it. We will not have to pay the cost of a main memory access. Programs that will need to access the new value of`X` immediately on another CPU will benefit from this design.
+- First we check if the lock is busy. Importantly, this check is performed against the cached value. As long as the lock is busy, we will stay in the while loop, and we won't need to evaluate the second part of the predicate. Only when the lock becomes free - when `lock == busy` evaluates to false - do we actually execute the atomic.
+- This spinlock is referred to as the **test-and-test-and-set spinlock**. It is also called a spin-on-read or spin-on-cached-value spinlock.
+- From a latency and delay standpoint, this lock is okay. It is slightly worse than the test-and-set lock because we do have to perform this extra step.
 
-The use of write-update or write-invalidate is determined by the hardware supporting your platform. You as the software developer have no say in which strategy is used.
+- From a contention standpoint, our performance varies.
+- If we don't have a cache coherent architecture, there is no difference in contention. Every single memory reference will go to memory.
+ - If we have cache coherence with the write-update strategy, our contention improves. The only problem with write-update is that all of the processors will see the value of the lock as free and thus all of them will try to lock the lock at once.
+ - If we have cache coherence with the write-invalidate strategy, our contention is terrible. Every single attempt to acquire the lock will generate contention for the memory module and will also create invalidation traffic.
 
-## [](https://www.omscs-notes.com/operating-systems/synchronization-constructs/#cache-coherence-and-atomics)Cache Coherence and Atomics
+- One outcome of executing an atomic instruction is that we will trigger the cache coherence strategy regardless of whether or not the value protected by the atomic changes.
+ - If we have a write-update situation, that coherence traffic will update the value of the other caches with the new value of the lock. If the lock was busy before the write-update event, and the lock remains busy after the write-update event, there is no problem. The CPU can keep spinning on the cached copy.
 
-Let's consider a scenario in which we have two CPUs. Each CPU needs to perform an atomic operation concerning `X`, and both CPUs have a reference to `X` present in their caches.
-
-When an atomic instruction is performed against the cached value of `X` on one CPU, it is really challenging to know whether or not an atomic instruction will be attempted on the cached value of `X` on another CPU. We obviously cannot have incoherent cache references between CPUs: this will affect the correctness of our applications.
-
-Atomic operations always bypass the caches and are issued directly to the memory location where the particular target variable is stored.
-
-By forcing atomic operations to go directly to the memory controller, we enforce a central entry point where all of the references can be ordered and synchronized in a unique manner. None of the race conditions that could have occurred had we let atomic update the cache can occur now.
-
-That being said, atomic instructions will take much longer than other types of instructions, since they can never leverage the cache. Not only will they always have to access main memory, but they will also have to contend on that memory.
-
-In addition, in order to guarantee atomic behavior, we have to generate the coherence traffic to either update or invalidate all of the cached references to `X`, regardless of whether `X` changed. This is a decision that was made to err on the side of safety.
-
-In summary, atomic instructions on SMP systems are more expensive than on single CPU system because of bus or I/C contention. In addition, atomics in general are more expensive because they bypass the cache and always trigger coherence traffic.
-
-## [](https://www.omscs-notes.com/operating-systems/synchronization-constructs/#spinlock-performance-metrics)Spinlock Performance Metrics
-
-We want the spinlock to have _low latency_. We can define latency as the time it takes a thread to acquire a free lock. Ideally, we want the thread to be able to acquire a free lock immediately with a single atomic instruction.
-
-In addition, we want the spinlock to have _low delay/waiting time_. We can define delay as the amount of time required for a thread to stop spinning and acquire a lock that has been freed. Again, we ideally would want the thread to be able to stop spinning and acquire a free lock immediately.
-
-Finally, we would like a design that _reduces contention_ on the shared bus or interconnect. By contention, we mean the contention due to the actual atomic memory references as well as the subsequent coherence traffic. Contention is bad because it will delay any other CPU that is trying to access memory. Most pertinent to our use case though, contention will also delay the acquisition and release of the spinlock.
-
-## [](https://www.omscs-notes.com/operating-systems/synchronization-constructs/#test-and-set-spinlock)Test and Set Spinlock
-
-Here is the API for the **test-and-set spinlock**.
-
-![](https://assets.omscs.io/notes/5CB26CEB-E617-4CBC-8123-3375C2C6875D.png)
-
-The `test_and_set` instruction is a very common atomic that most hardware platforms support.
-
-From a latency perspective, this spinlock is as good as it gets. We only execute one atomic operation, and there is no way we can do better than this.
-
-Regarding delay, this implementation could perform well. We are continuously just spinning on the atomic. As soon as the lock becomes free, the very next call to `test_and_set` - which is the very next instruction, given that we are spinning on the atomic - will immediately detect that, and the thread will acquire the lock and exit the loop.
-
-From a contention perspective this lock does not perform well. As long as the threads are spinning on the `test_and_set` instruction, the processor has to continuously go to main memory on each instruction. This will delay all other CPUs that need to access memory.
-
-The real problem with this implementation is that we are continuously spinning on the atomic instruction. Regardless of cache coherence, we are forced to constantly waste time going to memory every time we execute the `test_and_set` instruction.
-
-## [](https://www.omscs-notes.com/operating-systems/synchronization-constructs/#test-and-test-and-set-spinlock)Test and Test and Set Spinlock
-
-The problem with the previous implementation is that all of the CPUs are spinning on the atomic operation. Let's try to separate the test part - checking the value of the lock - from the atomic.
-
-The intuition is that CPUs can potentially test their cached copy of the lock and only execute the atomic if it detects that its cached copy has changed.
-
-Here is the resulting spinlock `lock` operation.
-
-![](https://assets.omscs.io/notes/C46BDD52-2F95-4EB4-8FA3-D10C244CF546.png)
-
-First we check if the lock is busy. Importantly, this check is performed against the cached value. As long as the lock is busy, we will stay in the while loop, and we won't need to evaluate the second part of the predicate. Only when the lock becomes free - when `lock == busy` evaluates to false - do we actually execute the atomic.
-
-This spinlock is referred to as the **test-and-test-and-set spinlock**. It is also called a spin-on-read or spin-on-cached-value spinlock.
-
-From a latency and delay standpoint, this lock is okay. It is slightly worse than the test-and-set lock because we do have to perform this extra step.
-
-From a contention standpoint, our performance varies.
-
-If we don't have a cache coherent architecture, there is no difference in contention. Every single memory reference will go to memory.
-
-If we have cache coherence with the write-update strategy, our contention improves. The only problem with write-update is that all of the processors will see the value of the lock as free and thus all of them will try to lock the lock at once.
-
-If we have cache coherence with the write-invalidate strategy, our contention is terrible. Every single attempt to acquire the lock will generate contention for the memory module and will also create invalidation traffic.
-
-One outcome of executing an atomic instruction is that we will trigger the cache coherence strategy regardless of whether or not the value protected by the atomic changes.
-
-If we have a write-update situation, that coherence traffic will update the value of the other caches with the new value of the lock. If the lock was busy before the write-update event, and the lock remains busy after the write-update event, there is no problem. The CPU can keep spinning on the cached copy.
-
-However, write-invalidate will invalidate the cached copy. Even if the value hasn't changed, the invalidation will force the CPU to go to main memory to execute the atomic. What this means is that any time another CPU executes an atomic, all of the other CPUs will be invalidated and will have to go to memory.
+- However, write-invalidate will invalidate the cached copy. Even if the value hasn't changed, the invalidation will force the CPU to go to main memory to execute the atomic. What this means is that any time another CPU executes an atomic, all of the other CPUs will be invalidated and will have to go to memory.
 
 ## [](https://www.omscs-notes.com/operating-systems/synchronization-constructs/#spinlock-delay-alternatives)Spinlock "Delay" Alternatives
 
